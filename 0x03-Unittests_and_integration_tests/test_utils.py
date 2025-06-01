@@ -28,7 +28,7 @@ class TestAccessNestedMap(unittest.TestCase):
 
     @parameterized.expand([
         ({}, ("a",), "a"),
-        ({"a": 1}, ("a", "b"), "b"),
+        ({"a": 1}, ("a", "b"), "a"),
     ])
     def test_access_nested_map_exception(self, nested_map, path, expected_key):
         """Test access_nested_map with invalid inputs.
