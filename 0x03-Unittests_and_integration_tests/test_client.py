@@ -109,7 +109,7 @@ class TestGithubOrgClient(unittest.TestCase):
 
     @parameterized.expand(TEST_PAYLOAD)
     @patch('client.get_json')
-    def test_public_repos(self, org_payload, repos_payload, expected_repos, _):
+    def test_public_repos(self, org_payload, repos_payload, expected_repos, _, mock_get_json):
         """Test that public_repos returns the correct value.
 
         Args:
@@ -133,7 +133,7 @@ class TestGithubOrgClient(unittest.TestCase):
 
     @parameterized.expand(TEST_PAYLOAD)
     @patch('client.get_json')
-    def test_public_repos_with_license(self, o, r, _, a):
+    def test_public_repos_with_license(self, o, r, _, a, mock_get_json):
         """Test that public_repos with license filter returns
         the correct value.
 
