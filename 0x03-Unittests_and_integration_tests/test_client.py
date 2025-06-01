@@ -76,8 +76,7 @@ class TestGithubOrgClient(unittest.TestCase):
     @parameterized.expand(TEST_PAYLOAD)
     @patch('client.get_json')
     def test_public_repos_with_license(self, org_payload, repos_payload, _, apache2_repos):
-        """Test that public_repos with license filter returns
-        the correct value.
+        """Test public_repos with license filter returns correct value.
 
         Args:
             org_payload: The organization payload
