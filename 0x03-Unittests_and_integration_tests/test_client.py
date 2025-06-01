@@ -10,6 +10,27 @@ from fixtures import TEST_PAYLOAD
 
 
 @parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
+class TestIntegrationGithubOrgClient(unittest.TestCase):
+    """Integration test cases for GithubOrgClient class.
+    """
+    @classmethod
+    def setUpClass(cls):
+        """Set up test fixtures."""
+        cls.get_patcher = patch('requests.get')
+        cls.mock_get = cls.get_patcher.start()
+        cls.mock_get.return_value.json.side_effect = [
+            cls.org_payload,
+            cls.repos_payload
+        ]
+        cls.mock_get.return_value.status_code = 200
+
+    @classmethod
+    def tearDownClass(cls):
+        """Tear down test fixtures."""
+        cls.get_patcher.stop()
+
+
+@parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
 class TestGithubOrgClient(unittest.TestCase):
     """Test cases for GithubOrgClient class.
     """
@@ -22,7 +43,6 @@ class TestGithubOrgClient(unittest.TestCase):
             cls.org_payload,
             cls.repos_payload
         ]
-        cls.mock_get.return_value.status_code = 200
 
     @classmethod
     def tearDownClass(cls):
