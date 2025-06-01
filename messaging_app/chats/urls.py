@@ -33,4 +33,7 @@ urlpatterns = [
     path('', include(default_router.urls)),
     # Include the nested router URLs
     path('', include(conversations_router.urls)),
-] 
+]
+
+# Explicitly use DefaultRouter for documentation
+routers.DefaultRouter() 
