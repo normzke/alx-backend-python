@@ -45,7 +45,7 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         self.mock_get.assert_called()
 
     def test_get_patcher(self):
-        """Test get_patcher is a patcher of requests.get."""
+        """Test patcher."""
         self.assertEqual(self.get_patcher.target, 'requests.get')
 
 
