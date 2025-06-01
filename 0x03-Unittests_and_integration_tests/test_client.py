@@ -13,21 +13,19 @@ from fixtures import TEST_PAYLOAD
 class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration test cases for GithubOrgClient class.
     """
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         """Set up test fixtures."""
-        cls.get_patcher = patch('requests.get')
-        cls.mock_get = cls.get_patcher.start()
-        cls.mock_get.return_value.json.side_effect = [
-            cls.org_payload,
-            cls.repos_payload
+        self.get_patcher = patch('requests.get')
+        self.mock_get = self.get_patcher.start()
+        self.mock_get.return_value.json.side_effect = [
+            self.org_payload,
+            self.repos_payload
         ]
-        cls.mock_get.return_value.status_code = 200
+        self.mock_get.return_value.status_code = 200
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         """Tear down test fixtures."""
-        cls.get_patcher.stop()
+        self.get_patcher.stop()
 
     def test_public_repos(self):
         """Test that public_repos returns the correct value."""
