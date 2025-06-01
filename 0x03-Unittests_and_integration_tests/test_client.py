@@ -74,7 +74,8 @@ class TestGithubOrgClient(unittest.TestCase):
 
     @patch('client.get_json')
     def test_public_repos_with_license(self, mock_get_json):
-        """Test that public_repos with license filter returns the correct value.
+        """Test that public_repos with license filter returns
+the correct value.
 
         Args:
             mock_get_json: The mocked get_json function
