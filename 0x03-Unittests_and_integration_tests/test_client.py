@@ -9,7 +9,10 @@ from client import GithubOrgClient
 from fixtures import TEST_PAYLOAD
 
 
-@parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
+@parameterized_class(
+    ('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'),
+    TEST_PAYLOAD
+)
 class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration test cases for GithubOrgClient class.
     """
@@ -35,18 +38,21 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         self.mock_get.assert_called()
 
     def test_public_repos_with_license(self):
-        """Test that public_repos with license filter returns the correct value."""
+        """Test public_repos with license filter."""
         client = GithubOrgClient('google')
         result = client.public_repos(license="apache-2.0")
         self.assertEqual(result, self.apache2_repos)
         self.mock_get.assert_called()
 
     def test_get_patcher(self):
-        """Test that get_patcher is a patcher of requests.get."""
+        """Test get_patcher is a patcher of requests.get."""
         self.assertEqual(self.get_patcher.target, 'requests.get')
 
 
-@parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
+@parameterized_class(
+    ('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'),
+    TEST_PAYLOAD
+)
 class TestGithubOrgClient(unittest.TestCase):
     """Test cases for GithubOrgClient class.
     """
