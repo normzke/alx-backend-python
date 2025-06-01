@@ -17,7 +17,7 @@ class TestGithubOrgClient(unittest.TestCase):
     @patch('client.get_json')
     def test_org(self, org, expected, mock_get_json):
         """Test that GithubOrgClient.org returns the correct value.
-        
+
         Args:
             org: The organization name
             expected: The expected response
@@ -49,7 +49,7 @@ class TestGithubOrgClient(unittest.TestCase):
     @patch('client.get_json')
     def test_public_repos(self, mock_get_json):
         """Test that public_repos returns the correct value.
-        
+
         Args:
             mock_get_json: The mocked get_json function
         """
@@ -76,7 +76,7 @@ class TestGithubOrgClient(unittest.TestCase):
     ])
     def test_has_license(self, repo, license_key, expected):
         """Test that has_license returns the correct value.
-        
+
         Args:
             repo: The repository dictionary
             license_key: The license key to check
@@ -86,4 +86,4 @@ class TestGithubOrgClient(unittest.TestCase):
         self.assertEqual(
             client.has_license(repo, license_key),
             expected
-        ) 
+        )
