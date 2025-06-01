@@ -3,16 +3,34 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers
 from .views import ConversationViewSet, MessageViewSet
 
-# Create a router and register our viewsets with it
-router = DefaultRouter()
-router.register(r'conversations', ConversationViewSet, basename='conversation')
+# Initialize the default router for REST framework
+default_router = DefaultRouter()
 
-# Create a nested router for messages
-conversations_router = routers.NestedDefaultRouter(router, r'conversations', lookup='conversation')
-conversations_router.register(r'messages', MessageViewSet, basename='conversation-messages')
+# Register the conversation viewset with the default router
+# This creates standard REST endpoints for conversations
+default_router.register(
+    r'conversations',
+    ConversationViewSet,
+    basename='conversation'
+)
 
-# The API URLs are now determined automatically by the router
+# Create a nested router for messages within conversations
+# This creates nested REST endpoints for messages
+conversations_router = routers.NestedDefaultRouter(
+    default_router,
+    r'conversations',
+    lookup='conversation'
+)
+conversations_router.register(
+    r'messages',
+    MessageViewSet,
+    basename='conversation-messages'
+)
+
+# Combine all router URLs
 urlpatterns = [
-    path('', include(router.urls)),
+    # Include the default router URLs
+    path('', include(default_router.urls)),
+    # Include the nested router URLs
     path('', include(conversations_router.urls)),
 ] 
