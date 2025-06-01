@@ -22,6 +22,7 @@ class TestGithubOrgClient(unittest.TestCase):
             cls.org_payload,
             cls.repos_payload
         ]
+        cls.mock_get.return_value.status_code = 200
 
     @classmethod
     def tearDownClass(cls):
