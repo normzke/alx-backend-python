@@ -67,8 +67,7 @@ class TestGithubOrgClient(unittest.TestCase):
             return_value=org_payload['repos_url']
         ) as mock_url:
             client = GithubOrgClient(org_payload['login'])
-            result = client.public_repos()
-            self.assertEqual(result, expected_repos)
+            self.assertEqual(client.public_repos(), expected_repos)
             mock_get_json.assert_called_once_with(mock_url.return_value)
 
     @parameterized.expand(TEST_PAYLOAD)
@@ -92,8 +91,7 @@ class TestGithubOrgClient(unittest.TestCase):
             return_value=o['repos_url']
         ) as mock_url:
             client = GithubOrgClient(o['login'])
-            result = client.public_repos(license="apache-2.0")
-            self.assertEqual(result, a)
+            self.assertEqual(client.public_repos(license="apache-2.0"), a)
             mock_get_json.assert_called_once_with(mock_url.return_value)
 
     @parameterized.expand([
