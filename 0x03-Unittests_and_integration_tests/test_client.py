@@ -53,10 +53,12 @@ class TestGithubOrgClient(unittest.TestCase):
         Args:
             mock_get_json: The mocked get_json function
         """
-        mock_get_json.return_value = [
+        test_payload = [
             {'name': 'repo1', 'license': {'key': 'mit'}},
             {'name': 'repo2', 'license': {'key': 'apache-2.0'}},
+            {'name': 'repo3', 'license': {'key': 'gpl'}},
         ]
+        mock_get_json.return_value = test_payload
         with patch.object(
             GithubOrgClient,
             '_public_repos_url',
@@ -66,7 +68,33 @@ class TestGithubOrgClient(unittest.TestCase):
             client = GithubOrgClient('google')
             self.assertEqual(
                 client.public_repos(),
-                ['repo1', 'repo2']
+                ['repo1', 'repo2', 'repo3']
+            )
+            mock_get_json.assert_called_once_with(mock_url.return_value)
+
+    @patch('client.get_json')
+    def test_public_repos_with_license(self, mock_get_json):
+        """Test that public_repos with license filter returns the correct value.
+
+        Args:
+            mock_get_json: The mocked get_json function
+        """
+        test_payload = [
+            {'name': 'repo1', 'license': {'key': 'mit'}},
+            {'name': 'repo2', 'license': {'key': 'apache-2.0'}},
+            {'name': 'repo3', 'license': {'key': 'gpl'}},
+        ]
+        mock_get_json.return_value = test_payload
+        with patch.object(
+            GithubOrgClient,
+            '_public_repos_url',
+            new_callable=PropertyMock,
+            return_value='https://api.github.com/orgs/google/repos'
+        ) as mock_url:
+            client = GithubOrgClient('google')
+            self.assertEqual(
+                client.public_repos(license="apache-2.0"),
+                ['repo2']
             )
             mock_get_json.assert_called_once_with(mock_url.return_value)
 
