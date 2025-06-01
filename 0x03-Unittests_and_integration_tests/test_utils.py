@@ -27,7 +27,7 @@ class TestAccessNestedMap(unittest.TestCase):
 
     @parameterized.expand([
         ({}, ("a",), "a"),
-        ({"a": 1}, ("a", "b"), "a"),
+        ({"a": 1}, ("a", "b"), "b"),
     ])
     def test_access_nested_map_exception(self, nested_map, path, expected_key):
         """Test access_nested_map with invalid inputs.
@@ -49,27 +49,28 @@ class TestGetJson(unittest.TestCase):
         ("http://example.com", {"payload": True}),
         ("http://holberton.io", {"payload": False}),
     ])
-    def test_get_json(self, test_url, test_payload):
+    @patch('requests.get')
+    def test_get_json(self, test_url, test_payload, mock_get):
         """Test get_json function with mocked requests.get.
         
         Args:
             test_url: The URL to test with
             test_payload: The expected JSON payload
+            mock_get: The mocked requests.get function
         """
         # Create a mock response object with a json method
         mock_response = Mock()
         mock_response.json.return_value = test_payload
+        mock_get.return_value = mock_response
         
-        # Patch requests.get to return our mock response
-        with patch('requests.get', return_value=mock_response) as mock_get:
-            # Call the function
-            result = get_json(test_url)
-            
-            # Assert that requests.get was called exactly once with test_url
-            mock_get.assert_called_once_with(test_url)
-            
-            # Assert that the result matches test_payload
-            self.assertEqual(result, test_payload)
+        # Call the function
+        result = get_json(test_url)
+        
+        # Assert that requests.get was called exactly once with test_url
+        mock_get.assert_called_once_with(test_url)
+        
+        # Assert that the result matches test_payload
+        self.assertEqual(result, test_payload)
 
 
 class TestMemoize(unittest.TestCase):
