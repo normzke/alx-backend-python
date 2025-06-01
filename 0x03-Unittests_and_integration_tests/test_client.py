@@ -4,6 +4,7 @@
 import unittest
 from unittest.mock import patch, Mock, PropertyMock
 from parameterized import parameterized, parameterized_class
+import requests
 from client import GithubOrgClient
 from fixtures import TEST_PAYLOAD
 
@@ -17,6 +18,10 @@ class TestGithubOrgClient(unittest.TestCase):
         """Set up test fixtures."""
         cls.get_patcher = patch('requests.get')
         cls.mock_get = cls.get_patcher.start()
+        cls.mock_get.return_value.json.side_effect = [
+            cls.org_payload,
+            cls.repos_payload
+        ]
 
     @classmethod
     def tearDownClass(cls):
