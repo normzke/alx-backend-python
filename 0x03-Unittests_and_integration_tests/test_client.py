@@ -34,12 +34,14 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         client = GithubOrgClient('google')
         result = client.public_repos()
         self.assertEqual(result, self.expected_repos)
+        self.mock_get.assert_called()
 
     def test_public_repos_with_license(self):
         """Test that public_repos with license filter returns the correct value."""
         client = GithubOrgClient('google')
         result = client.public_repos(license="apache-2.0")
         self.assertEqual(result, self.apache2_repos)
+        self.mock_get.assert_called()
 
 
 @parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
