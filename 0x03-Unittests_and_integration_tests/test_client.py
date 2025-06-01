@@ -43,6 +43,10 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         self.assertEqual(result, self.apache2_repos)
         self.mock_get.assert_called()
 
+    def test_get_patcher(self):
+        """Test that get_patcher is a patcher of requests.get."""
+        self.assertEqual(self.get_patcher.target, 'requests.get')
+
 
 @parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
 class TestGithubOrgClient(unittest.TestCase):
