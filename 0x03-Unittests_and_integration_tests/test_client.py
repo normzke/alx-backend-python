@@ -3,14 +3,26 @@
 """
 import unittest
 from unittest.mock import patch, Mock, PropertyMock
-from parameterized import parameterized
+from parameterized import parameterized, parameterized_class
 from client import GithubOrgClient
 from fixtures import TEST_PAYLOAD
 
 
+@parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
 class TestGithubOrgClient(unittest.TestCase):
     """Test cases for GithubOrgClient class.
     """
+    @classmethod
+    def setUpClass(cls):
+        """Set up test fixtures."""
+        cls.get_patcher = patch('requests.get')
+        cls.mock_get = cls.get_patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        """Tear down test fixtures."""
+        cls.get_patcher.stop()
+
     @parameterized.expand([
         ('google', {'login': 'google'}),
         ('abc', {'login': 'abc'}),
