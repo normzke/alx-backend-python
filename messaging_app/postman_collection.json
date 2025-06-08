@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "your-collection-id",
-		"name": "Messaging App API",
-		"description": "Collection for testing the Messaging App API endpoints",
+		"_postman_id": "messaging-app-collection",
+		"name": "Messaging App API Tests",
+		"description": "Collection for testing the Messaging App API endpoints including authentication, conversations, and messages",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,6 +11,30 @@
 			"item": [
 				{
 					"name": "Get JWT Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access and refresh tokens\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access');",
+									"    pm.expect(jsonData).to.have.property('refresh');",
+									"});",
+									"",
+									"// Save the tokens for later use",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"access_token\", jsonData.access);",
+									"pm.environment.set(\"refresh_token\", jsonData.refresh);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -21,7 +45,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"your_username\",\n    \"password\": \"your_password\"\n}"
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/token/",
@@ -32,6 +56,28 @@
 				},
 				{
 					"name": "Refresh JWT Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has new access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access');",
+									"});",
+									"",
+									"// Save the new access token",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"access_token\", jsonData.access);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -42,7 +88,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"refresh\": \"your_refresh_token\"\n}"
+							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/token/refresh/",
@@ -58,6 +104,25 @@
 			"item": [
 				{
 					"name": "List Conversations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has pagination data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('count');",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -75,6 +140,30 @@
 				},
 				{
 					"name": "Create Conversation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has conversation data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('participants');",
+									"});",
+									"",
+									"// Save the conversation ID for later use",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"conversation_id\", jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -89,7 +178,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"New Conversation\"\n}"
+							"raw": "{\n    \"name\": \"Test Conversation\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/conversations/",
@@ -100,6 +189,25 @@
 				},
 				{
 					"name": "Add Participant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"New participant is added\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var participants = jsonData.participants;",
+									"    pm.expect(participants).to.include(parseInt(pm.environment.get(\"new_participant_id\")));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -114,12 +222,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"user_id\": 2\n}"
+							"raw": "{\n    \"user_id\": \"{{new_participant_id}}\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/conversations/1/add_participant/",
+							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/add_participant/",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "1", "add_participant", ""]
+							"path": ["api", "conversations", "{{conversation_id}}", "add_participant", ""]
 						}
 					}
 				}
@@ -130,6 +238,25 @@
 			"item": [
 				{
 					"name": "List Messages",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has pagination data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('count');",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -139,14 +266,38 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/conversations/1/messages/",
+							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "1", "messages", ""]
+							"path": ["api", "conversations", "{{conversation_id}}", "messages", ""]
 						}
 					}
 				},
 				{
 					"name": "Create Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has message data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('content');",
+									"    pm.expect(jsonData).to.have.property('sender');",
+									"});",
+									"",
+									"// Save the message ID for later use",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"message_id\", jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -164,14 +315,32 @@
 							"raw": "{\n    \"content\": \"Hello, this is a test message\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/conversations/1/messages/",
+							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "1", "messages", ""]
+							"path": ["api", "conversations", "{{conversation_id}}", "messages", ""]
 						}
 					}
 				},
 				{
 					"name": "Mark Message as Read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Message is marked as read\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.is_read).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -181,23 +350,136 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/conversations/1/messages/1/mark_as_read/",
+							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/{{message_id}}/mark_as_read/",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "1", "messages", "1", "mark_as_read", ""]
+							"path": ["api", "conversations", "{{conversation_id}}", "messages", "{{message_id}}", "mark_as_read", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Unauthorized Access Tests",
+			"item": [
+				{
+					"name": "Access Without Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/conversations/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "conversations", ""]
+						}
+					}
+				},
+				{
+					"name": "Access Other User's Conversation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/conversations/999/messages/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "conversations", "999", "messages", ""]
 						}
 					}
 				}
 			]
 		}
 	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:8000"
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "your_username",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "your_password",
+			"type": "string"
 		},
 		{
 			"key": "access_token",
-			"value": "your_access_token_here"
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "conversation_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "message_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "new_participant_id",
+			"value": "2",
+			"type": "string"
 		}
 	]
+} 
 } 

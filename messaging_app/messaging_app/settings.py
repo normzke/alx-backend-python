@@ -123,11 +123,13 @@ STATIC_URL = 'static/'
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'chats.auth.CustomJWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'chats.auth.CustomBasicAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        'chats.permissions.IsParticipantOfConversation',
     ],
     'DEFAULT_PAGINATION_CLASS': 'chats.pagination.CustomPagination',
     'PAGE_SIZE': 20,
