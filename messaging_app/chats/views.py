@@ -9,86 +9,83 @@ from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation, IsMessageSender
 from .filters import MessageFilter, ConversationFilter
 from django.contrib.auth.models import User
+from .pagination import CustomPagination
 
 # Create your views here.
 
 class ConversationViewSet(viewsets.ModelViewSet):
+    queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['participants__username', 'name']
-    ordering_fields = ['created_at', 'name']
+    pagination_class = CustomPagination
     filterset_class = ConversationFilter
 
     def get_queryset(self):
         return Conversation.objects.filter(participants=self.request.user)
 
     def perform_create(self, serializer):
-        try:
-            conversation = serializer.save()
-            conversation.participants.add(self.request.user)
-            return conversation
-        except Exception as e:
-            raise ValidationError(f"Error creating conversation: {str(e)}")
+        conversation = serializer.save()
+        conversation.participants.add(self.request.user)
 
     @action(detail=True, methods=['post'])
     def add_participant(self, request, pk=None):
-        try:
-            conversation = self.get_object()
-            user_id = request.data.get('user_id')
-            
-            if not user_id:
-                raise ValidationError("user_id is required")
-                
-            if not User.objects.filter(id=user_id).exists():
-                raise ValidationError("User does not exist")
-                
-            conversation.participants.add(user_id)
+        conversation = self.get_object()
+        user_id = request.data.get('user_id')
+        
+        if not user_id:
             return Response(
-                ConversationSerializer(conversation).data,
-                status=status.HTTP_200_OK
-            )
-        except ValidationError as e:
-            return Response(
-                {'error': str(e)},
+                {'error': 'user_id is required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except Exception as e:
-            return Response(
-                {'error': f"Error adding participant: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            
+        conversation.participants.add(user_id)
+        return Response(
+            {'status': 'participant added'}, 
+            status=status.HTTP_200_OK
+        )
 
 class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated, IsParticipantOfConversation, IsMessageSender]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['content']
-    ordering_fields = ['created_at', 'is_read']
+    permission_classes = [IsAuthenticated, IsMessageSender]
+    pagination_class = CustomPagination
     filterset_class = MessageFilter
 
     def get_queryset(self):
-        try:
-            conversation_id = self.kwargs.get('conversation_pk')
-            if conversation_id:
-                return Message.objects.filter(
-                    conversation_id=conversation_id,
-                    conversation__participants=self.request.user
-                )
-            return Message.objects.none()
-        except Exception as e:
-            raise ValidationError(f"Error retrieving messages: {str(e)}")
+        conversation_id = self.kwargs.get('conversation_pk')
+        if conversation_id:
+            return Message.objects.filter(conversation_id=conversation_id)
+        return Message.objects.none()
 
     def perform_create(self, serializer):
-        try:
-            conversation_id = self.kwargs.get('conversation_pk')
-            conversation = get_object_or_404(
-                Conversation.objects.filter(participants=self.request.user),
-                id=conversation_id
+        conversation_id = self.kwargs.get('conversation_pk')
+        conversation = get_object_or_404(Conversation, id=conversation_id)
+        
+        if self.request.user not in conversation.participants.all():
+            return Response(
+                {'error': 'You are not a participant in this conversation'}, 
+                status=status.HTTP_403_FORBIDDEN
             )
-            serializer.save(sender=self.request.user, conversation=conversation)
-        except Exception as e:
-            raise ValidationError(f"Error creating message: {str(e)}")
+            
+        serializer.save(sender=self.request.user, conversation=conversation)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.sender != request.user:
+            return Response(
+                {'error': 'You can only update your own messages'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.sender != request.user:
+            return Response(
+                {'error': 'You can only delete your own messages'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, conversation_pk=None, pk=None):
