@@ -55,69 +55,19 @@
 					}
 				},
 				{
-					"name": "Refresh JWT Token",
+					"name": "Test Unauthorized Access",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
+									"pm.test(\"Status code is 401 for unauthorized access\", function () {",
+									"    pm.response.to.have.status(401);",
 									"});",
 									"",
-									"pm.test(\"Response has new access token\", function () {",
+									"pm.test(\"Response indicates authentication required\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('access');",
-									"});",
-									"",
-									"// Save the new access token",
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"access_token\", jsonData.access);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/token/refresh/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "token", "refresh", ""]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Conversations",
-			"item": [
-				{
-					"name": "List Conversations with Filters",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Response has pagination data with 20 items per page\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('count');",
-									"    pm.expect(jsonData).to.have.property('results');",
-									"    pm.expect(jsonData.results.length).to.be.at.most(20);",
+									"    pm.expect(jsonData.detail).to.equal('Authentication credentials were not provided.');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -126,33 +76,19 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
+						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/conversations/?participants={{user_id}}&created_after={{date}}&name=test",
+							"raw": "{{base_url}}/api/conversations/",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", ""],
-							"query": [
-								{
-									"key": "participants",
-									"value": "{{user_id}}"
-								},
-								{
-									"key": "created_after",
-									"value": "{{date}}"
-								},
-								{
-									"key": "name",
-									"value": "test"
-								}
-							]
+							"path": ["api", "conversations", ""]
 						}
 					}
-				},
+				}
+			]
+		},
+		{
+			"name": "Conversations",
+			"item": [
 				{
 					"name": "Create Conversation",
 					"event": [
@@ -203,56 +139,7 @@
 					}
 				},
 				{
-					"name": "Add Participant",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"New participant is added\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    var participants = jsonData.participants;",
-									"    pm.expect(participants).to.include(parseInt(pm.environment.get(\"new_participant_id\")));",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"user_id\": \"{{new_participant_id}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/add_participant/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "{{conversation_id}}", "add_participant", ""]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Messages",
-			"item": [
-				{
-					"name": "List Messages with Filters",
+					"name": "List Conversations with Pagination",
 					"event": [
 						{
 							"listen": "test",
@@ -265,6 +152,8 @@
 									"pm.test(\"Response has pagination data with 20 items per page\", function () {",
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.have.property('count');",
+									"    pm.expect(jsonData).to.have.property('next');",
+									"    pm.expect(jsonData).to.have.property('previous');",
 									"    pm.expect(jsonData).to.have.property('results');",
 									"    pm.expect(jsonData.results.length).to.be.at.most(20);",
 									"});"
@@ -282,28 +171,75 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/?created_after={{date}}&is_read=false&sender={{user_id}}",
+							"raw": "{{base_url}}/api/conversations/?page=1",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "{{conversation_id}}", "messages", ""],
+							"path": ["api", "conversations", ""],
 							"query": [
 								{
-									"key": "created_after",
-									"value": "{{date}}"
-								},
-								{
-									"key": "is_read",
-									"value": "false"
-								},
-								{
-									"key": "sender",
-									"value": "{{user_id}}"
+									"key": "page",
+									"value": "1"
 								}
 							]
 						}
 					}
 				},
 				{
-					"name": "Create Message",
+					"name": "List Conversations with Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has filtered results\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results.length).to.be.at.most(20);",
+									"    // Verify filtered results",
+									"    jsonData.results.forEach(function(conversation) {",
+									"        pm.expect(conversation.name).to.include('test');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/conversations/?name=test&created_after={{date}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "conversations", ""],
+							"query": [
+								{
+									"key": "name",
+									"value": "test"
+								},
+								{
+									"key": "created_after",
+									"value": "{{date}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Messages",
+			"item": [
+				{
+					"name": "Send Message",
 					"event": [
 						{
 							"listen": "test",
@@ -318,11 +254,8 @@
 									"    pm.expect(jsonData).to.have.property('id');",
 									"    pm.expect(jsonData).to.have.property('content');",
 									"    pm.expect(jsonData).to.have.property('sender');",
-									"});",
-									"",
-									"// Save the message ID for later use",
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"message_id\", jsonData.id);"
+									"    pm.expect(jsonData).to.have.property('conversation');",
+									"});"
 								],
 								"type": "text/javascript"
 							}
@@ -342,7 +275,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"content\": \"Hello, this is a test message\"\n}"
+							"raw": "{\n    \"content\": \"Test message\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/",
@@ -352,7 +285,7 @@
 					}
 				},
 				{
-					"name": "Mark Message as Read",
+					"name": "List Messages with Pagination",
 					"event": [
 						{
 							"listen": "test",
@@ -362,44 +295,13 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Message is marked as read\", function () {",
+									"pm.test(\"Response has pagination data with 20 items per page\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.is_read).to.be.true;",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/{{message_id}}/mark_as_read/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "{{conversation_id}}", "messages", "{{message_id}}", "mark_as_read", ""]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Unauthorized Access Tests",
-			"item": [
-				{
-					"name": "Access Without Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 401\", function () {",
-									"    pm.response.to.have.status(401);",
+									"    pm.expect(jsonData).to.have.property('count');",
+									"    pm.expect(jsonData).to.have.property('next');",
+									"    pm.expect(jsonData).to.have.property('previous');",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results.length).to.be.at.most(20);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -408,23 +310,44 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
 						"url": {
-							"raw": "{{base_url}}/api/conversations/",
+							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/?page=1",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", ""]
+							"path": ["api", "conversations", "{{conversation_id}}", "messages", ""],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
 						}
 					}
 				},
 				{
-					"name": "Access Other User's Conversation",
+					"name": "List Messages with Filters",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 404\", function () {",
-									"    pm.response.to.have.status(404);",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has filtered results\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results.length).to.be.at.most(20);",
+									"    // Verify filtered results",
+									"    jsonData.results.forEach(function(message) {",
+									"        pm.expect(message.is_read).to.be.false;",
+									"    });",
 									"});"
 								],
 								"type": "text/javascript"
@@ -440,9 +363,54 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/conversations/999/messages/",
+							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/?is_read=false&created_after={{date}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "999", "messages", ""]
+							"path": ["api", "conversations", "{{conversation_id}}", "messages", ""],
+							"query": [
+								{
+									"key": "is_read",
+									"value": "false"
+								},
+								{
+									"key": "created_after",
+									"value": "{{date}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Test Unauthorized Message Access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403 for unauthorized message access\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Response indicates permission denied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal('You do not have permission to perform this action.');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{invalid_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "conversations", "{{conversation_id}}", "messages", ""]
 						}
 					}
 				}
