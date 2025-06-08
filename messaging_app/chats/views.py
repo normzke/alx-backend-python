@@ -6,13 +6,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
+from .permissions import IsParticipantOfConversation
+from .filters import MessageFilter
 from django.contrib.auth.models import User
 
 # Create your views here.
 
 class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [filters.SearchFilter]
     search_fields = ['participants__username']
 
@@ -57,9 +59,11 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [filters.SearchFilter]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['content']
+    ordering_fields = ['created_at', 'is_read']
+    filterset_class = MessageFilter
 
     def get_queryset(self):
         try:
