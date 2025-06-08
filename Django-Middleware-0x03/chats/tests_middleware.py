@@ -14,9 +14,11 @@ class RequestLoggingMiddlewareTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.middleware = RequestLoggingMiddleware(get_response=lambda r: HttpResponse())
+        self.user = User.objects.create_user(username='testuser', password='testpass')
 
     def test_request_logging(self):
         request = self.factory.get('/chats/')
+        request.user = self.user
         response = self.middleware(request)
         self.assertEqual(response.status_code, 200)
 
