@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "messaging-app-collection",
 		"name": "Messaging App API Tests",
-		"description": "Collection for testing the Messaging App API endpoints including authentication, conversations, and messages",
+		"description": "Collection for testing the Messaging App API endpoints including authentication, conversations, and messages with pagination (20 items per page) and filtering",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -103,7 +103,7 @@
 			"name": "Conversations",
 			"item": [
 				{
-					"name": "List Conversations",
+					"name": "List Conversations with Filters",
 					"event": [
 						{
 							"listen": "test",
@@ -113,10 +113,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Response has pagination data\", function () {",
+									"pm.test(\"Response has pagination data with 20 items per page\", function () {",
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.have.property('count');",
 									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results.length).to.be.at.most(20);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -132,9 +133,23 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/conversations/",
+							"raw": "{{base_url}}/api/conversations/?participants={{user_id}}&created_after={{date}}&name=test",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", ""]
+							"path": ["api", "conversations", ""],
+							"query": [
+								{
+									"key": "participants",
+									"value": "{{user_id}}"
+								},
+								{
+									"key": "created_after",
+									"value": "{{date}}"
+								},
+								{
+									"key": "name",
+									"value": "test"
+								}
+							]
 						}
 					}
 				},
@@ -237,7 +252,7 @@
 			"name": "Messages",
 			"item": [
 				{
-					"name": "List Messages",
+					"name": "List Messages with Filters",
 					"event": [
 						{
 							"listen": "test",
@@ -247,10 +262,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Response has pagination data\", function () {",
+									"pm.test(\"Response has pagination data with 20 items per page\", function () {",
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.have.property('count');",
 									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results.length).to.be.at.most(20);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -266,9 +282,23 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/",
+							"raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/?created_after={{date}}&is_read=false&sender={{user_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "conversations", "{{conversation_id}}", "messages", ""]
+							"path": ["api", "conversations", "{{conversation_id}}", "messages", ""],
+							"query": [
+								{
+									"key": "created_after",
+									"value": "{{date}}"
+								},
+								{
+									"key": "is_read",
+									"value": "false"
+								},
+								{
+									"key": "sender",
+									"value": "{{user_id}}"
+								}
+							]
 						}
 					}
 				},
