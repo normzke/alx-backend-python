@@ -1,9 +1,9 @@
 import django_filters
+from django_filters import rest_framework as filters
 from .models import Message, Conversation
-from django.utils import timezone
-from datetime import timedelta
+from django.contrib.auth.models import User
 
-class MessageFilter(django_filters.FilterSet):
+class MessageFilter(filters.FilterSet):
     """
     Filter class for Message model that allows filtering by:
     - Time range (created_after, created_before)
@@ -11,50 +11,31 @@ class MessageFilter(django_filters.FilterSet):
     - Sender (sender)
     - Content (content)
     """
-    created_after = django_filters.DateTimeFilter(
-        field_name='created_at',
-        lookup_expr='gte',
-        help_text='Filter messages created after this datetime'
-    )
-    created_before = django_filters.DateTimeFilter(
-        field_name='created_at',
-        lookup_expr='lte',
-        help_text='Filter messages created before this datetime'
-    )
-    is_read = django_filters.BooleanFilter(
-        field_name='is_read',
-        help_text='Filter messages by read status'
-    )
-    sender = django_filters.NumberFilter(
-        field_name='sender__id',
-        help_text='Filter messages by sender ID'
-    )
-    content = django_filters.CharFilter(
-        field_name='content',
-        lookup_expr='icontains',
-        help_text='Filter messages by content (case-insensitive)'
-    )
-    
+    created_after = filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_before = filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
+    sender = filters.ModelChoiceFilter(queryset=User.objects.all())
+    is_read = filters.BooleanFilter()
+    conversation = filters.ModelChoiceFilter(queryset=Conversation.objects.all())
+
     class Meta:
         model = Message
-        fields = ['created_after', 'created_before', 'is_read', 'sender', 'content']
+        fields = ['sender', 'is_read', 'conversation', 'created_after', 'created_before']
 
-class ConversationFilter(django_filters.FilterSet):
+class ConversationFilter(filters.FilterSet):
     """
     Filter class for Conversation model that allows filtering by:
     - Participant (participant)
     - Name (name)
     """
-    participant = django_filters.NumberFilter(
-        field_name='participants__id',
-        help_text='Filter conversations by participant ID'
+    participants = filters.ModelMultipleChoiceFilter(
+        queryset=User.objects.all(),
+        field_name='participants',
+        lookup_expr='in'
     )
-    name = django_filters.CharFilter(
-        field_name='name',
-        lookup_expr='icontains',
-        help_text='Filter conversations by name (case-insensitive)'
-    )
-    
+    created_after = filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_before = filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
+    name = filters.CharFilter(lookup_expr='icontains')
+
     class Meta:
         model = Conversation
-        fields = ['participant', 'name'] 
+        fields = ['participants', 'name', 'created_after', 'created_before'] 

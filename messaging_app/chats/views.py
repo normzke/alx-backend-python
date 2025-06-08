@@ -9,7 +9,7 @@ from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsAuthenticatedUser, IsParticipantOfConversation, IsMessageSender
 from .filters import MessageFilter, ConversationFilter
 from django.contrib.auth.models import User
-from .pagination import CustomPagination
+from rest_framework.pagination import PageNumberPagination
 
 # Create your views here.
 
@@ -17,8 +17,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticatedUser, IsParticipantOfConversation]
-    pagination_class = CustomPagination
+    pagination_class = PageNumberPagination
     filterset_class = ConversationFilter
+    search_fields = ['name', 'participants__username']
+    ordering_fields = ['created_at', 'name']
 
     def get_queryset(self):
         return Conversation.objects.filter(participants=self.request.user)
@@ -48,8 +50,10 @@ class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticatedUser, IsMessageSender]
-    pagination_class = CustomPagination
+    pagination_class = PageNumberPagination
     filterset_class = MessageFilter
+    search_fields = ['content']
+    ordering_fields = ['created_at', 'is_read']
 
     def get_queryset(self):
         conversation_id = self.kwargs.get('conversation_pk')
