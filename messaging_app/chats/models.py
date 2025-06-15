@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 import uuid
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+User = get_user_model()
 
 class User(AbstractUser):
     """
@@ -70,3 +74,35 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender.username} in Conversation {self.conversation.conversation_id}"
+
+class MessageHistory(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')
+    content = models.TextField()
+    edited_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-edited_at']
+        verbose_name_plural = 'Message histories'
+
+    def __str__(self):
+        return f"History for message {self.message.id} at {self.edited_at}"
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='notifications')
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notification for {self.user.username} about message {self.message.id}"
+
+# Custom manager for unread messages
+class UnreadMessagesManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(read=False)
+
+    def for_user(self, user):
+        return self.filter(conversation__participants=user)
