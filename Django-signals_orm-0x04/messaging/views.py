@@ -9,6 +9,20 @@ from django.http import JsonResponse
 from django.views.decorators.vary import vary_on_cookie
 from .models import Message, Notification
 
+def get_message_thread(message):
+    """
+    Recursively fetch all replies to a message in a threaded structure.
+    Returns a list of dicts: [{'message': <Message>, 'replies': [...]}, ...]
+    """
+    replies = Message.objects.filter(parent_message=message).select_related('sender', 'receiver').order_by('timestamp')
+    return [
+        {
+            'message': reply,
+            'replies': get_message_thread(reply)
+        }
+        for reply in replies
+    ]
+
 @login_required
 @cache_page(60)  # Cache for 60 seconds
 @vary_on_cookie  # Vary cache by user
@@ -25,18 +39,18 @@ def conversation_list(request):
 @vary_on_cookie  # Vary cache by user
 def thread_detail(request, thread_id):
     """View to display a specific thread with all its replies"""
-    thread_messages = Message.get_thread(thread_id)
-    
-    if not thread_messages.exists():
-        messages.error(request, 'Thread not found.')
-        return redirect('conversation_list')
+    root_message = get_object_or_404(Message, thread_id=thread_id, parent_message__isnull=True)
+    thread_tree = {
+        'message': root_message,
+        'replies': get_message_thread(root_message)
+    }
     
     # Mark messages as read
-    thread_messages.filter(receiver=request.user, read=False).update(read=True)
+    Message.objects.filter(receiver=request.user, read=False, thread_id=thread_id).update(read=True)
     
     return render(request, 'messaging/thread_detail.html', {
-        'messages': thread_messages,
-        'root_message': thread_messages.first()
+        'thread_tree': thread_tree,
+        'root_message': root_message
     })
 
 @login_required
@@ -44,7 +58,12 @@ def thread_detail(request, thread_id):
 @vary_on_cookie  # Vary cache by user
 def inbox(request):
     """View to display unread messages in user's inbox"""
-    unread_messages = Message.unread.for_user(request.user)
+    # Use the unread manager with optimized query
+    unread_messages = Message.unread.for_user(request.user).only(
+        'id', 'content', 'timestamp', 'sender__username', 'sender__id', 'read'
+    ).select_related('sender')
+    
+    # Get unread count using the optimized manager method
     unread_count = Message.unread.get_unread_count(request.user)
     
     return render(request, 'messaging/inbox.html', {
@@ -58,6 +77,7 @@ def mark_messages_read(request):
     if request.method == 'POST':
         message_ids = request.POST.getlist('message_ids[]')
         if message_ids:
+            # Use the unread manager's optimized method
             Message.unread.mark_as_read(request.user, message_ids)
             return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error'}, status=400)
@@ -107,8 +127,7 @@ def delete_user(request):
                 messages.success(request, 'Your account has been successfully deleted.')
                 return redirect('login')
         except Exception as e:
-            messages.error(request, f'An error occurred while deleting your account: {str(e)}')
-            return render(request, 'messaging/delete_account.html')
+            messages.error(request, f'Error deleting account: {str(e)}')
     
     return render(request, 'messaging/delete_account.html')
 
