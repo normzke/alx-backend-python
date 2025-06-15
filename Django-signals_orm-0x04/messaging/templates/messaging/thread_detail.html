@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Thread: {{ root_message.content|truncatechars:50 }}</h4>
+                    <a href="{% url 'conversation_list' %}" class="btn btn-secondary">Back to Conversations</a>
+                </div>
+                <div class="card-body">
+                    <div class="thread-container">
+                        {% for message in messages %}
+                            <div class="message {% if message.parent_message %}reply{% endif %}" 
+                                 style="margin-left: {% if message.parent_message %}2rem{% else %}0{% endif %};">
+                                <div class="message-header">
+                                    <strong>{{ message.sender.username }}</strong>
+                                    <small class="text-muted">{{ message.timestamp|date:"F j, Y, g:i a" }}</small>
+                                    {% if message.edited %}
+                                        <span class="badge badge-info">edited</span>
+                                    {% endif %}
+                                </div>
+                                <div class="message-content">
+                                    {{ message.content }}
+                                </div>
+                                <div class="message-actions">
+                                    <button class="btn btn-sm btn-outline-primary reply-btn" 
+                                            data-message-id="{{ message.id }}">
+                                        Reply
+                                    </button>
+                                    {% if message.sender == request.user %}
+                                        <button class="btn btn-sm btn-outline-secondary edit-btn"
+                                                data-message-id="{{ message.id }}">
+                                            Edit
+                                        </button>
+                                    {% endif %}
+                                </div>
+                                <div class="reply-form" id="reply-form-{{ message.id }}" style="display: none;">
+                                    <form method="post" action="{% url 'reply_to_message' message.id %}" class="mt-2">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <textarea name="content" class="form-control" rows="2" required></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-sm">Send Reply</button>
+                                        <button type="button" class="btn btn-secondary btn-sm cancel-reply">Cancel</button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle reply buttons
+    document.querySelectorAll('.reply-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const messageId = this.dataset.messageId;
+            const replyForm = document.getElementById(`reply-form-${messageId}`);
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+
+    // Handle cancel reply buttons
+    document.querySelectorAll('.cancel-reply').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.reply-form').style.display = 'none';
+        });
+    });
+
+    // Handle reply form submissions
+    document.querySelectorAll('.reply-form form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Inbox ({{ unread_count }} unread)</h4>
+                    <button id="mark-all-read" class="btn btn-primary">Mark All as Read</button>
+                </div>
+                <div class="card-body">
+                    {% if unread_messages %}
+                        <div class="list-group">
+                            {% for message in unread_messages %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ message.sender.username }}</h5>
+                                        <small>{{ message.timestamp|date:"F j, Y, g:i a" }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ message.content }}</p>
+                                    <div class="message-actions">
+                                        <a href="{% url 'thread_detail' message.thread_id %}" 
+                                           class="btn btn-sm btn-primary">View Thread</a>
+                                        <button class="btn btn-sm btn-secondary mark-read" 
+                                                data-message-id="{{ message.id }}">
+                                            Mark as Read
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center">No unread messages</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle individual message mark as read
+    document.querySelectorAll('.mark-read').forEach(button => {
+        button.addEventListener('click', function() {
+            const messageId = this.dataset.messageId;
+            markMessagesRead([messageId]);
+        });
+    });
+
+    // Handle mark all as read
+    document.getElementById('mark-all-read').addEventListener('click', function() {
+        const messageIds = Array.from(document.querySelectorAll('.mark-read'))
+            .map(button => button.dataset.messageId);
+        markMessagesRead(messageIds);
+    });
+
+    function markMessagesRead(messageIds) {
+        const formData = new FormData();
+        messageIds.forEach(id => formData.append('message_ids[]', id));
+
+        fetch('{% url "mark_messages_read" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 
