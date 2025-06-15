@@ -1,0 +1,60 @@
+{% if node %}
+<div class="message {% if node.message.parent_message %}reply{% endif %}" style="margin-left: {% if node.message.parent_message %}2rem{% else %}0{% endif %};">
+    <div class="message-header">
+        <strong>{{ node.message.sender.username }}</strong>
+        <small class="text-muted">{{ node.message.timestamp|date:"F j, Y, g:i a" }}</small>
+        {% if node.message.edited %}
+            <span class="badge badge-info">edited</span>
+            <button class="btn btn-sm btn-link" type="button" data-toggle="collapse" data-target="#history-{{ node.message.id }}">
+                Show History
+            </button>
+        {% endif %}
+    </div>
+    <div class="message-content">
+        {{ node.message.content }}
+    </div>
+    {% if node.message.edited %}
+        <div class="collapse" id="history-{{ node.message.id }}">
+            <div class="card card-body mt-2">
+                <h6>Edit History:</h6>
+                {% for history in node.message.history.all %}
+                    <div class="history-item">
+                        <small class="text-muted">
+                            Edited by {{ history.edited_by.username|default:"Unknown" }} 
+                            on {{ history.edited_at|date:"F j, Y, g:i a" }}
+                        </small>
+                        <div class="old-content">
+                            {{ history.old_content }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <div class="message-actions">
+        <button class="btn btn-sm btn-outline-primary reply-btn" data-message-id="{{ node.message.id }}">
+            Reply
+        </button>
+        {% if node.message.sender == request.user %}
+            <button class="btn btn-sm btn-outline-secondary edit-btn" data-message-id="{{ node.message.id }}">
+                Edit
+            </button>
+        {% endif %}
+    </div>
+    <div class="reply-form" id="reply-form-{{ node.message.id }}" style="display: none;">
+        <form method="post" action="{% url 'reply_to_message' node.message.id %}" class="mt-2">
+            {% csrf_token %}
+            <div class="form-group">
+                <textarea name="content" class="form-control" rows="2" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Send Reply</button>
+            <button type="button" class="btn btn-secondary btn-sm cancel-reply">Cancel</button>
+        </form>
+    </div>
+    {% if node.replies %}
+        {% for reply in node.replies %}
+            {% include "messaging/thread_node.html" with node=reply %}
+        {% endfor %}
+    {% endif %}
+</div>
+{% endif %} 

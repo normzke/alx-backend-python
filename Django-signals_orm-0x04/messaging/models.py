@@ -13,6 +13,7 @@ class Message(models.Model):
     read = models.BooleanField(default=False)
     parent_message = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     thread_id = models.UUIDField(null=True, blank=True, help_text="ID of the root message in the thread")
+    edited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='edited_messages')
 
     objects = models.Manager()
     unread = UnreadMessagesManager()
@@ -74,6 +75,7 @@ class MessageHistory(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')
     old_content = models.TextField()
     edited_at = models.DateTimeField(default=timezone.now)
+    edited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='message_edits')
 
     class Meta:
         ordering = ['-edited_at']
