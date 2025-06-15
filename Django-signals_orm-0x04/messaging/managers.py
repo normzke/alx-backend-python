@@ -18,6 +18,8 @@ class UnreadMessagesManager(models.Manager):
             )\
             .order_by('-timestamp')
 
+    unread_for_user = for_user
+
     def mark_as_read(self, user, message_ids=None):
         """Mark messages as read for a user"""
         queryset = self.get_queryset().filter(receiver=user)
