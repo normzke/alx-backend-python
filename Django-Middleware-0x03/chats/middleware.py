@@ -18,9 +18,8 @@ class RequestLoggingMiddleware:
         # Get user information
         user = request.user.username if request.user.is_authenticated else 'Anonymous'
         
-        # Log the request information
-        log_message = f"{datetime.now()} - User: {user} - Path: {request.path}"
-        self.logger.info(log_message)
+        # Log the request
+        self.logger.info(f"{datetime.now()} - User: {user} - Path: {request.path}")
         
         # Process the request
         response = self.get_response(request)

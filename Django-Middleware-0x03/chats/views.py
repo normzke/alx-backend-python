@@ -10,6 +10,7 @@ from .permissions import IsAuthenticatedUser, IsParticipantOfConversation, IsMes
 from .filters import MessageFilter, ConversationFilter
 from django.contrib.auth.models import User
 from rest_framework.pagination import PageNumberPagination
+from django.http import HttpResponse
 
 # Create your views here.
 
@@ -106,3 +107,6 @@ class MessageViewSet(viewsets.ModelViewSet):
                 {'error': f"Error marking message as read: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+def index(request):
+    return HttpResponse("Welcome to the Chat App!")

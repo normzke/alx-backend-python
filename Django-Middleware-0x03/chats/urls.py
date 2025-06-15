@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers
 from .views import ConversationViewSet, MessageViewSet
+from . import views
 
 # Initialize the default router for REST framework
 default_router = DefaultRouter()
@@ -33,6 +34,7 @@ urlpatterns = [
     path('', include(default_router.urls)),
     # Include the nested router URLs
     path('', include(conversations_router.urls)),
+    path('', views.index, name='index'),
 ]
 
 # Explicitly use DefaultRouter for documentation
