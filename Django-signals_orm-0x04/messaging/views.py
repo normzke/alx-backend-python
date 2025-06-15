@@ -58,8 +58,17 @@ def thread_detail(request, thread_id):
 @vary_on_cookie  # Vary cache by user
 def inbox(request):
     """View to display unread messages in user's inbox"""
-    # Use the unread manager with the required method name
-    unread_messages = Message.unread.unread_for_user(request.user)
+    # Use the unread manager with optimized field selection
+    unread_messages = Message.unread.unread_for_user(request.user).only(
+        'id',
+        'content',
+        'timestamp',
+        'sender__username',
+        'sender__id',
+        'read',
+        'thread_id'
+    ).select_related('sender')
+    
     unread_count = Message.unread.get_unread_count(request.user)
     return render(request, 'messaging/inbox.html', {
         'unread_messages': unread_messages,
