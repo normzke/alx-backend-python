@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Script for blue-green deployment: apply blue, green, and switch service
+
+set -e
+
+# Apply blue deployment and service
+echo "Applying blue deployment..."
+kubectl apply -f blue_deployment.yaml
+
+# Apply green deployment and service
+echo "Applying green deployment..."
+kubectl apply -f green_deployment.yaml
+
+# Apply the shared service (initially points to blue)
+echo "Applying shared service (kubeservice.yaml)..."
+kubectl apply -f kubeservice.yaml
+
+# Wait for green pods to be ready
+echo "Waiting for green deployment pods to be ready..."
+kubectl rollout status deployment/django-messaging-app-green
+
+# Get green pod name
+GREEN_POD=$(kubectl get pods -l app=django-messaging-app-green -o jsonpath='{.items[0].metadata.name}')
+echo "Checking logs for green pod: $GREEN_POD"
+kubectl logs $GREEN_POD | tail -20
+
+echo "Blue-green deployment applied. To switch traffic, update kubeservice.yaml selector to 'django-messaging-app-green' and re-apply." 
