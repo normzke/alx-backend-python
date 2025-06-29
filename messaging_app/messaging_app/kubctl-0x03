@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Script for rolling update of blue deployment and downtime check
+
+DEPLOYMENT=django-messaging-app-blue
+SERVICE=django-messaging-service
+PORT=8000
+NAMESPACE=default
+
+# Apply the updated deployment (image version 2.0)
+echo "Applying updated blue deployment..."
+kubectl apply -f blue_deployment.yaml
+
+# Start curl in background to check for downtime
+echo "Testing for downtime with curl... (Ctrl+C to stop)"
+ENDPOINT="http://localhost:$PORT/"
+
+# Start curl loop in background, log to file
+(
+  for i in {1..30}; do
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" $ENDPOINT)
+    echo "[$(date +%T)] Status: $STATUS"
+    sleep 1
+  done
+) &
+CURL_PID=$!
+
+# Monitor rollout status
+echo "Monitoring rollout status..."
+kubectl rollout status deployment/$DEPLOYMENT
+
+# Wait for curl loop to finish
+wait $CURL_PID
+
+echo "Rolling update complete. Current pods:"
+kubectl get pods -l app=$DEPLOYMENT 
