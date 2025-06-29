@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-messaging-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django-messaging-app
+  template:
+    metadata:
+      labels:
+        app: django-messaging-app
+    spec:
+      containers:
+      - name: django-messaging-app
+        image: IMAGE_NAME:latest  # <-- Replace IMAGE_NAME with your built/pushed image name
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MYSQL_DATABASE
+          value: "messaging_db"
+        - name: MYSQL_USER
+          value: "messaging_user"
+        - name: MYSQL_PASSWORD
+          value: "messaging_pass"
+        - name: MYSQL_HOST
+          value: "db"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-messaging-service
+spec:
+  selector:
+    app: django-messaging-app
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP 
