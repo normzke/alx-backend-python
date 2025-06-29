@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-messaging-app-green
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django-messaging-app-green
+  template:
+    metadata:
+      labels:
+        app: django-messaging-app-green
+    spec:
+      containers:
+      - name: django-messaging-app-green
+        image: IMAGE_NAME:green  # <-- Replace IMAGE_NAME with your new image tag
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MYSQL_DATABASE
+          value: "messaging_db"
+        - name: MYSQL_USER
+          value: "messaging_user"
+        - name: MYSQL_PASSWORD
+          value: "messaging_pass"
+        - name: MYSQL_HOST
+          value: "db"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-messaging-service-green
+spec:
+  selector:
+    app: django-messaging-app-green
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP 
